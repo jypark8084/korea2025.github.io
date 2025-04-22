@@ -2,7 +2,6 @@ const scriptName = "출석체크봇";
 let attendanceMap = {};
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
-  if (packageName && packageName !== "com.kakao.talk") return;
 
   // .출석 (닉네임 입력 없이, sender로 자동 처리)
   if (msg.trim() === ".출석") {

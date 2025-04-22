@@ -57,18 +57,20 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: name })
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
+        .then(async res => {
+          const data = await res.json();
+          if (res.ok && data.success) {
             document.getElementById("output").innerText =
               `${name}님 출석이 저장되었습니다 🎉`;
           } else {
+            const message = data.error || "서버 오류";
             document.getElementById("output").innerText =
-              "⚠️ 저장 실패: " + (data.error || "서버 오류");
+              `⚠️ 저장 실패: ${message}`;
           }
         })
         .catch(err => {
-          document.getElementById("output").innerText = "❌ 오류 발생: " + err;
+          document.getElementById("output").innerText =
+            "❌ 요청 실패: " + err.message;
         });
     }
 
@@ -76,17 +78,24 @@
       fetch(`${API_BASE}/api/load`)
         .then(res => res.json())
         .then(json => {
-          if (!json.attendance) {
+          const attendance = json.attendance || {};
+          const entries = Object.entries(attendance);
+
+          if (entries.length === 0) {
             document.getElementById("output").innerText = "출석 기록이 없습니다.";
             return;
           }
 
           const lines = ["📊 출석 현황:"];
-          for (const [name, info] of Object.entries(json.attendance)) {
+          for (const [name, info] of entries) {
             lines.push(`- ${name}: 누적 ${info.count}회 / 연속 ${info.streak}일`);
           }
 
           document.getElementById("output").innerText = lines.join("\n");
+        })
+        .catch(err => {
+          document.getElementById("output").innerText =
+            "❌ 현황 불러오기 실패: " + err.message;
         });
     }
   </script>
