@@ -1,40 +1,42 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>📡 Render API 연동 테스트</title>
-  <style>
-    body { font-family: Arial; max-width: 600px; margin: auto; padding: 2rem; }
-    textarea { width: 100%; height: 100px; font-size: 16px; margin-bottom: 10px; }
-    button { margin-right: 10px; }
-    #output { background: #eee; padding: 1rem; margin-top: 20px; }
-  </style>
+  <title>출석체크 테스트</title>
 </head>
 <body>
-  <h1>🔗 Render API 연동 테스트</h1>
-  <textarea id="textInput" placeholder="여기에 텍스트 입력..."></textarea><br>
-  <button onclick="save()">저장</button>
-  <button onclick="load()">불러오기</button>
+  <h1>📋 출석체크</h1>
+  <input type="text" id="nameInput" placeholder="이름을 입력하세요">
+  <button onclick="checkIn()">출석하기</button>
+  <button onclick="loadData()">출석 데이터 불러오기</button>
 
-  <div id="output">저장된 내용이 여기에 표시됩니다.</div>
+  <pre id="output"></pre>
 
   <script>
-    const API_BASE = 'https://korea2025-server.onrender.com'; // 👉 너의 실제 Render 주소로 바꿔줘
+    const API_BASE = "https://korea2025-server.onrender.com";
 
-    async function save() {
-      const text = document.getElementById('textInput').value;
-      const res = await fetch(`${API_BASE}/api/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+    function checkIn() {
+      const name = document.getElementById("nameInput").value;
+      fetch(`${API_BASE}/api/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: name })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        document.getElementById("output").innerText = "오류 발생: " + err;
       });
-      alert('저장 완료!');
     }
 
-    async function load() {
-      const res = await fetch(`${API_BASE}/api/load`);
-      const data = await res.json();
-      document.getElementById('output').textContent = data.text || '(저장된 내용 없음)';
+    function loadData() {
+      fetch(`${API_BASE}/api/load`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+        });
     }
   </script>
 </body>
