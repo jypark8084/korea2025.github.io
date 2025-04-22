@@ -1,41 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>출석체크 테스트</title>
+  <meta charset="UTF-8" />
+  <title>출석체크 시스템</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      text-align: center;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    input {
+      padding: 10px;
+      width: 60%;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      text-align: left;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+  </style>
 </head>
 <body>
   <h1>📋 출석체크</h1>
-  <input type="text" id="nameInput" placeholder="이름을 입력하세요">
-  <button onclick="checkIn()">출석하기</button>
-  <button onclick="loadData()">출석 데이터 불러오기</button>
+  <input type="text" id="nameInput" placeholder="닉네임을 입력하세요" />
+  <div>
+    <button onclick="checkIn()">✅ 출석하기</button>
+    <button onclick="loadData()">📊 출석 현황 보기</button>
+  </div>
 
-  <pre id="output"></pre>
+  <pre id="output">⬅️ 여기에 출석 결과가 표시됩니다</pre>
 
   <script>
     const API_BASE = "https://korea2025-server.onrender.com";
 
     function checkIn() {
-      const name = document.getElementById("nameInput").value;
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name) return alert("닉네임을 입력해주세요!");
+
       fetch(`${API_BASE}/api/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: name })
       })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("output").innerText = JSON.stringify(data, null, 2);
-      })
-      .catch(err => {
-        document.getElementById("output").innerText = "오류 발생: " + err;
-      });
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById("output").innerText =
+              `${name}님 출석이 저장되었습니다 🎉`;
+          } else {
+            document.getElementById("output").innerText =
+              "⚠️ 저장 실패: " + (data.error || "서버 오류");
+          }
+        })
+        .catch(err => {
+          document.getElementById("output").innerText = "❌ 오류 발생: " + err;
+        });
     }
 
     function loadData() {
       fetch(`${API_BASE}/api/load`)
         .then(res => res.json())
-        .then(data => {
-          document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+        .then(json => {
+          if (!json.attendance) {
+            document.getElementById("output").innerText = "출석 기록이 없습니다.";
+            return;
+          }
+
+          const lines = ["📊 출석 현황:"];
+          for (const [name, info] of Object.entries(json.attendance)) {
+            lines.push(`- ${name}: 누적 ${info.count}회 / 연속 ${info.streak}일`);
+          }
+
+          document.getElementById("output").innerText = lines.join("\n");
         });
     }
   </script>
