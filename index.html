@@ -57,16 +57,24 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: name })
       })
-        .then(res => res.json())
+        .then(res => {
+          return res.json().catch(() => {
+            throw new Error("JSON 파싱 실패");
+          });
+        })
         .then(data => {
+          console.log("✅ 응답 데이터:", data);
+
           if (data.success) {
-            document.getElementById("output").innerText = data.message;
+            document.getElementById("output").innerText =
+              data.message || `${name}님 출석 완료 🎉`;
           } else {
             document.getElementById("output").innerText =
               "⚠️ 저장 실패: " + (data.error || "서버 오류");
           }
         })
         .catch(err => {
+          console.error("❌ 오류:", err);
           document.getElementById("output").innerText =
             "❌ 요청 실패: " + err.message;
         });
@@ -76,6 +84,7 @@
       fetch(`${API_BASE}/api/load`)
         .then(res => res.json())
         .then(json => {
+          console.log("📊 불러온 데이터:", json);
           const attendance = json.attendance || {};
           const entries = Object.entries(attendance);
 
@@ -92,10 +101,15 @@
           document.getElementById("output").innerText = lines.join("\n");
         })
         .catch(err => {
+          console.error("❌ 현황 불러오기 실패:", err);
           document.getElementById("output").innerText =
             "❌ 현황 불러오기 실패: " + err.message;
         });
     }
+
+    window.onload = () => {
+      loadData(); // 페이지 로드 시 자동으로 불러오기
+    };
   </script>
 </body>
 </html>
