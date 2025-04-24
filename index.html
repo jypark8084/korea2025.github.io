@@ -1,64 +1,101 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>숫자 관리 시스템</title>
+  <meta charset="UTF-8">
+  <title>📋 출석체크</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
       text-align: center;
-      margin-top: 50px;
+      background-color: #f9f9f9;
     }
-    #number {
-      font-size: 50px;
-      margin: 20px 0;
+    h1 {
+      color: #333;
+    }
+    input {
+      padding: 10px;
+      width: 60%;
+      font-size: 16px;
     }
     button {
-      font-size: 20px;
       padding: 10px 20px;
-      margin: 5px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      text-align: left;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      overflow-x: auto;
     }
   </style>
 </head>
 <body>
-  <h1>현재 숫자</h1>
-  <div id="number">0</div>
-  <button onclick="updateNumber(1)">+1</button>
-  <button onclick="updateNumber(-1)">-1</button>
+  <h1>📋 출석체크</h1>
+  <input type="text" id="nameInput" placeholder="닉네임을 입력하세요" />
+  <div>
+    <button onclick="checkIn()">✅ 출석하기</button>
+    <button onclick="loadData()">📊 출석 현황 보기</button>
+  </div>
+
+  <pre id="output">⬅️ 여기에 출석 결과가 표시됩니다</pre>
 
   <script>
-    const API_BASE = "https://korea2025-server.onrender.com"; // Render 서버 주소
+    const API_BASE = "https://korea2025-server.onrender.com";
 
-    function getNumberFromServer() {
-      fetch(`${API_BASE}/api/get_number`)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("number").innerText = data.number;
-        })
-        .catch(err => {
-          console.error("❌ 숫자 불러오기 실패:", err);
-          document.getElementById("number").innerText = "에러";
-        });
-    }
+    function checkIn() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name) return alert("닉네임을 입력해주세요!");
 
-    function updateNumber(amount) {
-      fetch(`${API_BASE}/api/update_number`, {
+      fetch(`${API_BASE}/api/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amount })
+        body: JSON.stringify({ text: name })
       })
         .then(res => res.json())
         .then(data => {
-          document.getElementById("number").innerText = data.number;
+          if (data.success) {
+            document.getElementById("output").innerText = data.message;
+          } else {
+            document.getElementById("output").innerText =
+              "⚠️ 저장 실패: " + (data.error || "서버 오류");
+          }
         })
         .catch(err => {
-          console.error("❌ 숫자 업데이트 실패:", err);
+          document.getElementById("output").innerText =
+            "❌ 요청 실패: " + err.message;
         });
     }
 
-    // 페이지 로드시 숫자 불러오기
-    window.onload = getNumberFromServer;
+    function loadData() {
+      fetch(`${API_BASE}/api/load`)
+        .then(res => res.json())
+        .then(json => {
+          const attendance = json.attendance || {};
+          const entries = Object.entries(attendance);
+
+          if (entries.length === 0) {
+            document.getElementById("output").innerText = "출석 기록이 없습니다.";
+            return;
+          }
+
+          const lines = ["📊 출석 현황:"];
+          for (const [name, info] of entries) {
+            lines.push(`- ${name}: 누적 ${info.count}회 / 연속 ${info.streak}일`);
+          }
+
+          document.getElementById("output").innerText = lines.join("\n");
+        })
+        .catch(err => {
+          document.getElementById("output").innerText =
+            "❌ 현황 불러오기 실패: " + err.message;
+        });
+    }
   </script>
 </body>
 </html>
